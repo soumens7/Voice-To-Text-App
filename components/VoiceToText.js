@@ -5,6 +5,7 @@ const VoiceToText = () => {
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState(null);
 
   useEffect(() => {
@@ -17,11 +18,56 @@ const VoiceToText = () => {
         recognition.continuous = true;
         recognition.interimResults = true;
         setSpeechRecognition(recognition);
+
+        recognition.onerror = (event) => {
+          console.error("Speech Recognition Error:", event.error);
+          alert("Sorry, there was an error with speech recognition.");
+        };
       } else {
         alert("Speech Recognition is not supported in this browser.");
       }
     }
+
+    // Cleanup on component unmount
+    return () => {
+      if (speechRecognition) {
+        speechRecognition.abort();
+      }
+    };
   }, []);
+
+  let timeoutId;
+
+  // Retry function to handle rate limiting
+  const callAPIWithRetry = async (
+    transcribedText,
+    retries = 3,
+    delay = 1000
+  ) => {
+    try {
+      const response = await fetch("/api/route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: transcribedText }),
+      });
+
+      if (response.status === 429 && retries > 0) {
+        console.log(`Rate limit hit. Retrying in ${delay}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before retrying
+        return callAPIWithRetry(transcribedText, retries - 1, delay * 2); // Exponential backoff
+      }
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResponse(data.result); // Set GPT-3 response
+    } catch (error) {
+      console.error("Error:", error);
+      setResponse("Error occurred while fetching the translation.");
+    }
+  };
 
   const startListening = () => {
     if (speechRecognition) {
@@ -31,17 +77,17 @@ const VoiceToText = () => {
         const transcribedText = result[0].transcript;
         setTranscript(transcribedText);
 
-        // Call GPT-3 API with the transcribed text
-        fetch("/api/gpt3/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: transcribedText }),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            setResponse(data.result); // Set the GPT-3 response
-          })
-          .catch((error) => console.error("Error:", error));
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          if (transcribedText.length > 1) {
+            setIsLoading(true); // Show loading indicator
+
+            // Use retry logic to send API request
+            callAPIWithRetry(transcribedText)
+              .then(() => setIsLoading(false)) // Hide loading after success
+              .catch(() => setIsLoading(false)); // Hide loading on error
+          }
+        }, 1000); // Delay 1 second
       };
       setIsListening(true);
     }
@@ -60,7 +106,6 @@ const VoiceToText = () => {
         Voice-to-Text App
       </h1>
 
-      {/* Transcript Display */}
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg mb-4">
         <p className="text-lg font-medium text-gray-700 mb-4">
           {isListening ? "Listening..." : "Click to Start Listening"}
@@ -70,7 +115,6 @@ const VoiceToText = () => {
         </p>
       </div>
 
-      {/* Start/Stop Button */}
       <div className="mt-4">
         <button
           onClick={isListening ? stopListening : startListening}
@@ -80,13 +124,14 @@ const VoiceToText = () => {
         </button>
       </div>
 
-      {/* GPT-3 Response */}
       <div className="mt-6 w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
         <h2 className="text-2xl font-medium text-gray-700 mb-4">
-          GPT-3 Response:
+          API Response:
         </h2>
         <p className="text-lg text-gray-800">
-          {response || "Translation or result will appear here"}
+          {isLoading
+            ? "Loading..."
+            : response || "Translation or result will appear here"}
         </p>
       </div>
     </div>
