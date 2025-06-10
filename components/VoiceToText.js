@@ -62,7 +62,7 @@ const VoiceToText = () => {
       }
 
       const data = await response.json();
-      setResponse(data.result); // Set GPT-3 response
+      setResponse(data.result); // Save Hugging Face response
     } catch (error) {
       console.error("Error:", error);
       setResponse("Error occurred while fetching the translation.");
