@@ -65,7 +65,7 @@ const VoiceToText = () => {
       setResponse(data.result); // Save Hugging Face response
     } catch (error) {
       console.error("Error:", error);
-      setResponse("Error occurred while fetching the translation.");
+      setResponse("Error occurred while fetching the summary.");
     }
   };
 
@@ -131,7 +131,7 @@ const VoiceToText = () => {
         <p className="text-lg text-gray-800">
           {isLoading
             ? "Loading..."
-            : response || "Translation or result will appear here"}
+            : response || "Summary or result will appear here"}
         </p>
       </div>
     </div>
