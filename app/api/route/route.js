@@ -61,3 +61,6 @@ export async function POST(req) {
     );
   }
 }
+
+// Export for testing purposes
+export { callAPIWithRetry };
