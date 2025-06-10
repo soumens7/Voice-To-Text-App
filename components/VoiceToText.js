@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const VoiceToText = () => {
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [speechRecognition, setSpeechRecognition] = useState(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -17,7 +17,7 @@ const VoiceToText = () => {
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
-        setSpeechRecognition(recognition);
+        recognitionRef.current = recognition;
 
         recognition.onerror = (event) => {
           console.error("Speech Recognition Error:", event.error);
@@ -30,8 +30,8 @@ const VoiceToText = () => {
 
     // Cleanup on component unmount
     return () => {
-      if (speechRecognition) {
-        speechRecognition.abort();
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
       }
     };
   }, []);
@@ -70,9 +70,9 @@ const VoiceToText = () => {
   };
 
   const startListening = () => {
-    if (speechRecognition) {
-      speechRecognition.start();
-      speechRecognition.onresult = (event) => {
+    if (recognitionRef.current) {
+      recognitionRef.current.start();
+      recognitionRef.current.onresult = (event) => {
         const result = event.results[event.resultIndex];
         const transcribedText = result[0].transcript;
         setTranscript(transcribedText);
@@ -94,8 +94,8 @@ const VoiceToText = () => {
   };
 
   const stopListening = () => {
-    if (speechRecognition) {
-      speechRecognition.stop();
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
       setIsListening(false);
     }
   };
