@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const VoiceToText = () => {
   const [transcript, setTranscript] = useState("");
@@ -33,10 +33,13 @@ const VoiceToText = () => {
       if (speechRecognition) {
         speechRecognition.abort();
       }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
     };
   }, []);
 
-  let timeoutId;
+  const timeoutIdRef = useRef(null);
 
   // Retry function to handle rate limiting
   const callAPIWithRetry = async (
@@ -77,8 +80,10 @@ const VoiceToText = () => {
         const transcribedText = result[0].transcript;
         setTranscript(transcribedText);
 
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+        }
+        timeoutIdRef.current = setTimeout(() => {
           if (transcribedText.length > 1) {
             setIsLoading(true); // Show loading indicator
 
