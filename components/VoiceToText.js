@@ -7,6 +7,7 @@ const VoiceToText = () => {
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const recognitionRef = useRef(null);
+  const [direction, setDirection] = useState("auto"); // 'auto', 'hi-en', or 'en-hi'
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -48,10 +49,10 @@ const VoiceToText = () => {
     delay = 1000
   ) => {
     try {
-      const response = await fetch("/api/route", {
+      const response = await fetch("/api/route/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: transcribedText }),
+        body: JSON.stringify({ prompt: transcribedText, direction: "hi-en" }),
       });
 
       if (response.status === 429 && retries > 0) {
@@ -68,7 +69,7 @@ const VoiceToText = () => {
       setResponse(data.result); // Save Hugging Face response
     } catch (error) {
       console.error("Error:", error);
-      setResponse("Error occurred while fetching the summary.");
+      setResponse("Error occurred while fetching the translation.");
     }
   };
 
@@ -110,7 +111,18 @@ const VoiceToText = () => {
       <h1 className="text-4xl font-semibold text-blue-600 mb-6">
         Voice-to-Text App
       </h1>
-
+      <div className="mb-4">
+        <label className="mr-2 font-medium text-gray-700">Translate:</label>
+        <select
+          value={direction}
+          onChange={(e) => setDirection(e.target.value)}
+          className="p-2 border rounded"
+        >
+          <option value="auto">Auto Detect</option>
+          <option value="hi-en">Hindi → English</option>
+          <option value="en-hi">English → Hindi</option>
+        </select>
+      </div>
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg mb-4">
         <p className="text-lg font-medium text-gray-700 mb-4">
           {isListening ? "Listening..." : "Click to Start Listening"}
@@ -134,9 +146,7 @@ const VoiceToText = () => {
           API Response:
         </h2>
         <p className="text-lg text-gray-800">
-          {isLoading
-            ? "Loading..."
-            : response || "Summary or result will appear here"}
+          {isLoading ? "Loading..." : response || "Result will appear here"}
         </p>
       </div>
     </div>

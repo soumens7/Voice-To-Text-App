@@ -1,31 +1,42 @@
 import axios from "axios";
 
-// Retry function to handle rate limiting and errors
-const callAPIWithRetry = async (text, retries = 3, delay = 1000) => {
+// Utility to detect Hindi (Devanagari) characters
+function detectLanguage(text) {
+  const hindiRegex = /[\u0900-\u097F]/;
+  return hindiRegex.test(text) ? "hi-en" : "en-hi";
+}
+
+// Retry logic for Hugging Face Inference API
+const callAPIWithRetry = async (text, direction, retries = 3, delay = 1000) => {
+  const modelUrl =
+    direction === "hi-en"
+      ? "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-hi-en"
+      : "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-en-hi";
+
   try {
     const response = await axios.post(
-      "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-hi-en", // Hugging Face model URL
-      {
-        inputs: text, // the text you want to summarize or translate
-      },
+      modelUrl,
+      { inputs: text },
       {
         headers: {
-          Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`, // Hugging Face API key
+          Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
           "Content-Type": "application/json",
         },
       }
     );
 
-    // Return the response
     return response.data;
   } catch (error) {
-    if (retries > 0 && error.response && error.response.status === 429) {
-      console.log(`Rate limit hit, retrying in ${delay}ms...`);
-      await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before retrying
-      return callAPIWithRetry(text, retries - 1, delay * 2); // Exponential backoff
+    if (retries > 0 && error.response?.status === 429) {
+      console.log(`Rate limit hit. Retrying in ${delay}ms...`);
+      await new Promise((res) => setTimeout(res, delay));
+      return callAPIWithRetry(text, direction, retries - 1, delay * 2);
     } else {
-      console.error("Error with Hugging Face API:", error);
-      throw error; // Rethrow if no retries left or different error
+      console.error(
+        "Hugging Face API Error:",
+        error?.response?.data || error.message
+      );
+      throw error;
     }
   }
 };
@@ -39,19 +50,17 @@ export async function POST(req) {
     });
   }
 
+  const direction = detectLanguage(prompt);
+
   try {
-    // Call the Hugging Face API with retry logic
-    const response = await callAPIWithRetry(`Summarize this: ${prompt}`);
+    const response = await callAPIWithRetry(prompt, direction);
+    const translatedText =
+      response[0]?.translation_text || "No output returned.";
 
-    // Get the summary text from the response
-    const summaryText = response[0]?.summary_text || "No summary returned.";
-
-    // Return the result as JSON
-    return new Response(JSON.stringify({ result: summaryText }), {
+    return new Response(JSON.stringify({ result: translatedText }), {
       status: 200,
     });
   } catch (error) {
-    console.error("Hugging Face API Error:", error);
     return new Response(
       JSON.stringify({
         error: "Error with Hugging Face API",
@@ -61,6 +70,3 @@ export async function POST(req) {
     );
   }
 }
-
-// Export for testing purposes
-export { callAPIWithRetry };
