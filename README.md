@@ -29,7 +29,7 @@ This is a simple Voice-to-Text translation web application built with **Next.js*
 
 - **Frontend**: Next.js (React), Tailwind CSS
 - **Speech Recognition**: Web Speech API
-- **Translation API**: Hugging Face Inference API (Opus MT and IndicTrans models)
+- **Translation API**: Hugging Face Inference API (Opus MT models)
 - **Deployment**: Render (for both frontend and backend)
 
 ---
