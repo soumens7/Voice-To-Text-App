@@ -112,7 +112,7 @@ const VoiceToText = () => {
         Voice-to-Text App
       </h1>
       <div className="mb-4">
-        <label className="mr-2 font-medium text-gray-700">Translate:</label>
+        {/* <label className="mr-2 font-medium text-gray-700">Translate:</label>
         <select
           value={direction}
           onChange={(e) => setDirection(e.target.value)}
@@ -121,7 +121,7 @@ const VoiceToText = () => {
           <option value="auto">Auto Detect</option>
           <option value="hi-en">Hindi → English</option>
           <option value="en-hi">English → Hindi</option>
-        </select>
+        </select> */}
       </div>
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg mb-4">
         <p className="text-lg font-medium text-gray-700 mb-4">
