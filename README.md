@@ -23,7 +23,7 @@ This is a simple Voice-to-Text translation web application built with **Next.js*
 
 ---
 
-## ![alt text](Screenshot 2025-06-30 at 11.20.57 PM.png)
+## ![alt text](<Screenshot 2025-06-30 at 11.20.57 PM.png>)
 
 ## 🛠️ Tech Stack
 
@@ -39,7 +39,7 @@ This is a simple Voice-to-Text translation web application built with **Next.js*
 /app  
 └── /api  
 └── /route
-└── route.js # Server action using Hugging Face API
+  └── route.js # Server action using Hugging Face API
 
 └── page.js # Main frontend logic
 └── /components
