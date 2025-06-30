@@ -10,7 +10,7 @@ function detectLanguage(text) {
 const callAPIWithRetry = async (text, direction, retries = 3, delay = 1000) => {
   const modelUrl =
     direction === "hi-en"
-      ? "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-hi-en"
+      ? "https://api-inference.huggingface.co/models/Helsinki-NLP/ai4bharat/indic-trans"
       : "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-en-hi";
 
   try {

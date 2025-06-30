@@ -7,7 +7,7 @@ const VoiceToText = () => {
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const recognitionRef = useRef(null);
-  const [direction, setDirection] = useState("auto"); // 'auto', 'hi-en', or 'en-hi'
+  //const [direction, setDirection] = useState("auto"); // 'auto', 'hi-en', or 'en-hi'
 
   useEffect(() => {
     if (typeof window !== "undefined") {
