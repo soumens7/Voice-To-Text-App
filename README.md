@@ -37,9 +37,9 @@ This is a simple Voice-to-Text translation web application built with **Next.js*
 ## 📁 Project Structure
 
 /app
-├── /api
-│ └── /route
-│ └── route.js # Server action using Hugging Face API
+├── /api  
+│ └── /route  
+│ └── route.js # Server action using Hugging Face API  
 ├── page.js # Main frontend logic
 ├── /components
 │ └── VoiceToText.js # Voice-to-Text React component
