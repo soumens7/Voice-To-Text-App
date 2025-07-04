@@ -109,8 +109,11 @@ const VoiceToText = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
       <h1 className="text-4xl font-semibold text-blue-600 mb-6">
-        Voice-to-Text App
+        Voice-to-Text Translation
       </h1>
+      <h2 className="text-4xl font-semibold text-blue-600 mb-6">
+        English → Hindi
+      </h2>
       <div className="mb-4">
         {/* <label className="mr-2 font-medium text-gray-700">Translate:</label>
         <select
