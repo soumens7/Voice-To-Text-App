@@ -121,7 +121,7 @@ const VoiceToText = () => {
           onChange={(e) => setDirection(e.target.value)}
           className="p-2 border rounded"
         >
-          <option value="auto">Auto Detect</option>
+          <option value="auto">Auto Detec</option>
           <option value="hi-en">Hindi → English</option>
           <option value="en-hi">English → Hindi</option>
         </select> */}
