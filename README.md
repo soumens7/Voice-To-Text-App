@@ -19,7 +19,7 @@ This is a simple Voice-to-Text translation web application built with **Next.js*
 
 ## 🚀 Live Demo
 
-> Check out the live version of the project [here](https://voice-to-text-app-shit.onrender.com/)
+> Check out the live version of the project [here](https://voice-to-text-app-red.vercel.app/)
 
 ---
 
