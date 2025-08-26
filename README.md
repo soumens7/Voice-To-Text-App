@@ -21,6 +21,7 @@ This is a simple Voice-to-Text translation web application built with **Next.js*
 
 > Check out the live version of the project [here](https://voice-to-text-app-red.vercel.app/)
 
+[![CI](https://github.com/soumens7/Voice-To-Text-App/actions/workflows/ci.yml/badge.svg)](https://github.com/soumens7/Voice-To-Text-App/actions)
 ---
 
 ## ![alt text](<Screenshot 2025-06-30 at 11.20.57 PM.png>)
