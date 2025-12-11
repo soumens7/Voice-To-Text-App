@@ -109,12 +109,12 @@ export async function POST(req) {
       /* --- CASE 2: Roman Hindi --- */
       mode = "Roman Hindi → English";
 
-      // Step 1: Transliterate
+      // Transliterate
       const devanagari = await transliterateRomanToDevanagari(prompt);
       console.log("Transliterated:", devanagari);
 
       if (devanagari && devanagari.trim()) {
-        // Step 2: Translate Hindi → English
+        // Translate Hindi → English
         result = await translate(devanagari, HINDI_TO_ENGLISH);
       } else {
         // Transliteration failed → try direct HI→EN
