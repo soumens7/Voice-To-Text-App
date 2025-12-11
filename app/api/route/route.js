@@ -1,17 +1,18 @@
 import axios from "axios";
 
-/* ----------------- Configure model endpoints ----------------- */
+// Roman Hindi → Devanagari
 const ROMAN_TO_DEV =
   "https://router.huggingface.co/hf-inference/models/ai4bharat/IndicTrans-v2-Roman-to-Devanagari";
 
+// English → Hindi
 const ENGLISH_TO_HINDI =
   "https://router.huggingface.co/hf-inference/models/Helsinki-NLP/opus-mt-en-hi";
 
+// Hindi → English
 const HINDI_TO_ENGLISH =
   "https://router.huggingface.co/hf-inference/models/Helsinki-NLP/opus-mt-hi-en";
-/* ------------------------------------------------------------ */
 
-const MAX_INPUT_LENGTH = 2000; // trim very long inputs
+const MAX_INPUT_LENGTH = 2000;
 
 function isDevanagari(text) {
   return /[\u0900-\u097F]/.test(text);
@@ -34,7 +35,7 @@ function isLikelyRomanHindi(text) {
   return romanWords.some((w) => lower.includes(w));
 }
 
-/** Transliterate Roman Hindi -> Devanagari using IndicTrans Roman model */
+/* ---------------- Transliteration ---------------- */
 async function transliterateRomanToDevanagari(romanText) {
   try {
     const res = await axios.post(
@@ -48,7 +49,6 @@ async function transliterateRomanToDevanagari(romanText) {
       }
     );
 
-    // transliteration model returns generated_text
     return res.data?.[0]?.generated_text ?? "";
   } catch (err) {
     console.error("Transliteration failed:", err.response?.data || err.message);
@@ -56,7 +56,7 @@ async function transliterateRomanToDevanagari(romanText) {
   }
 }
 
-/** Translate generic helper — returns best available string */
+/* ---------------- Translation Helper ---------------- */
 async function translate(text, modelUrl) {
   try {
     const res = await axios.post(
@@ -70,20 +70,21 @@ async function translate(text, modelUrl) {
       }
     );
 
-    // prefer translation_text, then generated_text, then string array
     const out =
       res.data?.[0]?.translation_text ??
       res.data?.[0]?.generated_text ??
       (Array.isArray(res.data) && typeof res.data[0] === "string"
         ? res.data[0]
-        : undefined);
+        : "");
 
-    return out ?? "";
+    return out;
   } catch (err) {
     console.error("Translation failed:", err.response?.data || err.message);
     throw err;
   }
 }
+
+/* ---------------------- ROUTE HANDLER ---------------------- */
 
 export async function POST(req) {
   try {
@@ -94,51 +95,37 @@ export async function POST(req) {
       });
     }
 
-    // trim extremely long inputs to keep inference stable
     const prompt = rawPrompt.slice(0, MAX_INPUT_LENGTH);
-
-    let mode = "";
     let result = "";
+    let mode = "";
 
+    console.log("🗣 Incoming prompt:", prompt);
+
+    /* --- CASE 1: Hindi in Devanagari Script --- */
     if (isDevanagari(prompt)) {
-      // Hindi (Devanagari) -> English
       mode = "Hindi → English";
       result = await translate(prompt, HINDI_TO_ENGLISH);
     } else if (isLikelyRomanHindi(prompt)) {
-      // Roman Hindi -> transliterate -> Hindi(Devanagari) -> English
-      mode = "Roman Hindi → English (via transliteration)";
+      /* --- CASE 2: Roman Hindi --- */
+      mode = "Roman Hindi → English";
+
+      // Step 1: Transliterate
       const devanagari = await transliterateRomanToDevanagari(prompt);
+      console.log("Transliterated:", devanagari);
 
       if (devanagari && devanagari.trim()) {
+        // Step 2: Translate Hindi → English
         result = await translate(devanagari, HINDI_TO_ENGLISH);
-
-        // if translation empty, try direct transliteration result as fallback
-        if (!result) {
-          result = devanagari;
-        }
       } else {
-        // transliteration failed — best-effort fallback:
-        // attempt to translate the original text as if it were English->Hindi (least ideal)
+        // Transliteration failed → try direct HI→EN
         console.warn(
-          "Transliteration empty; attempting fallback translation of original text."
+          "⚠️ Transliteration empty. Trying Hindi→English translation directly."
         );
-        try {
-          result = await translate(prompt, ENGLISH_TO_HINDI);
-          mode += " (fallback: treated as English→Hindi)";
-        } catch (fallbackErr) {
-          // fallback failed — return a helpful error
-          console.error(
-            "Fallback translation also failed:",
-            fallbackErr.response?.data || fallbackErr.message
-          );
-          return new Response(
-            JSON.stringify({ error: "Translation/transliteration failed" }),
-            { status: 500 }
-          );
-        }
+        result = await translate(prompt, HINDI_TO_ENGLISH);
+        mode += " (fallback)";
       }
     } else {
-      // Assume English -> Hindi
+      /* --- CASE 3: Pure English --- */
       mode = "English → Hindi";
       result = await translate(prompt, ENGLISH_TO_HINDI);
     }
@@ -147,18 +134,13 @@ export async function POST(req) {
       status: 200,
     });
   } catch (err) {
-    console.error(
-      "Translation route error:",
-      err.response?.data || err.message || err
-    );
+    console.error("Translation Route Error:", err.message);
     return new Response(
       JSON.stringify({
         error: "Translation failed",
-        details: String(err.message || err),
+        details: err.message,
       }),
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
