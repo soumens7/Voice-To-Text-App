@@ -10,36 +10,37 @@ const VoiceToText = () => {
   //const [direction, setDirection] = useState("auto"); // 'auto', 'hi-en', or 'en-hi'
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (typeof window === "undefined") return;
 
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognitionRef.current = recognition;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-        recognition.onerror = (event) => {
-          console.error("Speech Recognition Error:", event.error);
-          alert("Sorry, there was an error with speech recognition.");
-        };
-      } else {
-        alert("Speech Recognition is not supported in this browser.");
-      }
+    if (!SR) {
+      alert("Speech recognition not supported.");
+      return;
     }
 
-    // Cleanup on component unmount
+    const recognition = new SR();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onerror = (event) => {
+      console.error("Speech error:", event.error);
+      alert(`Speech error: ${event.error}`);
+    };
+
+    recognition.onend = () => {
+      console.log("Recognition ended");
+    };
+
+    recognitionRef.current = recognition;
+
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
+      recognition.stop();
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
       }
     };
   }, []);
-
   const timeoutIdRef = useRef(null);
 
   // Retry function to handle rate limiting
